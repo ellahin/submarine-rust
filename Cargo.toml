@@ -1,0 +1,9 @@
+[workspace]
+
+members = [
+  "sub",
+  "controller",
+  "data"
+]
+
+resolver = "2"
