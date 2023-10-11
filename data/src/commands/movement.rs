@@ -105,7 +105,7 @@ impl Movment {
     }
 
     pub fn decode_packet(packet: [u8; 7]) -> Result<Self, MovmentPacketDecodeError> {
-        if packet[0] != 1 {
+        if packet[0] != COMMAND_NUMBER {
             return Err(MovmentPacketDecodeError::NotMovementPacket);
         }
 
