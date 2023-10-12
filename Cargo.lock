@@ -3,12 +3,15 @@
 version = 3
 
 [[package]]
-name = "controller"
+name = "common_data"
 version = "0.1.0"
 
 [[package]]
-name = "data"
+name = "controller"
 version = "0.1.0"
+dependencies = [
+ "common_data",
+]
 
 [[package]]
 name = "sub"

@@ -3,7 +3,7 @@
 members = [
   "sub",
   "controller",
-  "data"
+  "common_data"
 ]
 
 resolver = "2"
