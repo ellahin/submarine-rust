@@ -1,3 +1,4 @@
+#[derive(Debug, Clone)]
 pub struct Movment {
     // Movement order: accel, pitch, yaw, roll
     movement_command: [i8; 4],
@@ -7,9 +8,11 @@ pub struct Movment {
 
 const COMMAND_NUMBER: u8 = 1;
 
+#[derive(Debug, Clone)]
 pub enum MovmentSetError {
     IncorrectNumber,
 }
+#[derive(Debug, Clone)]
 pub enum MovmentPacketDecodeError {
     ChecksumNotValid,
     NotMovementPacket,
