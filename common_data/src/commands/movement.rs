@@ -1,9 +1,9 @@
 #[derive(Debug, Clone)]
 pub struct Movement {
     // Movement order: accel, pitch, yaw, roll
-    movement_command: [i8; 4],
-    checksum: i16,
-    packet: Option<[u8; 7]>,
+    pub movement_command: [i8; 4],
+    pub checksum: i16,
+    pub packet: Option<[u8; 7]>,
 }
 
 const COMMAND_NUMBER: u8 = 1;
