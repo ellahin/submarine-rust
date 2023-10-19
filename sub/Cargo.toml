@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 common_data = { path = "../common_data/"}
+opencv = "0.85.2"
