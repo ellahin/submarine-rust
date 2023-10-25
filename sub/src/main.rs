@@ -5,13 +5,8 @@ use crate::data::threads::movechannel::{MovementChannelData, MovementChannelData
 use crate::repo::physical::motors::generic::MotorGeneric;
 use crate::repo::processors::movementprocessor::MovementProcessor;
 use common_data::commands::movement::Movement;
-use opencv::{
-    core::{Mat, Vector},
-    imgcodecs,
-    prelude::VideoCaptureTrait,
-    videoio,
-};
 use repo::physical::motors::base::Motor;
+use rscam::{Camera, Config};
 use std::io::Write;
 use std::net::TcpListener;
 use std::sync::mpsc;
@@ -52,32 +47,35 @@ fn main() {
             let mut stream = stream_incoming.unwrap();
 
             thread::spawn(move || {
-                let mut cam = videoio::VideoCapture::new(0, videoio::CAP_ANY)
-                    .expect("Failed to get video capture");
-                let mut frame = Mat::default();
-                let mut buf = Vector::new();
-                cam.read(&mut frame).expect("Failed to capture frame");
-                buf.clear();
-                let _ = imgcodecs::imencode(".jpg", &frame, &mut buf, &Vector::new());
+                let mut camera = Camera::new("/dev/video0").unwrap();
+
+                camera
+                    .start(&Config {
+                        interval: (1, 30),
+                        resolution: (640, 480),
+                        format: b"MJPG",
+                        ..Default::default()
+                    })
+                    .unwrap();
 
                 let response = format!(
                     "HTTP/1.1 200 OK\r\nContent-Type: multipart/x-mixed-replace; boundary=frame\r\n\r\n"
                 );
 
+                let mut buff = camera.capture().unwrap();
+
                 stream.write_all(response.as_bytes()).unwrap();
 
                 loop {
-                    cam.read(&mut frame).expect("Failed to capture frame");
-                    buf.clear();
-                    let _ = imgcodecs::imencode(".jpg", &frame, &mut buf, &Vector::new());
+                    buff = camera.capture().unwrap();
 
                     let image_data = format!(
                         "--frame\r\nContent-Type: image/jpeg\r\nContent-Length: {}\r\n\r\n",
-                        buf.len()
+                        buff.len()
                     );
 
                     stream.write_all(image_data.as_bytes()).unwrap();
-                    stream.write_all(buf.as_slice()).unwrap();
+                    stream.write_all(&buff).unwrap();
                     stream.write_all(b"\r\n").unwrap();
                     stream.flush().unwrap();
                 }
