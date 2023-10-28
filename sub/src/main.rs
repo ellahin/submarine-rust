@@ -83,6 +83,7 @@ fn main() {
         }
     });
 
+    // TCP command handler
     let movement_listener = TcpListener::bind("0.0.0.0:3000").unwrap();
 
     for stream in movement_listener.incoming() {
