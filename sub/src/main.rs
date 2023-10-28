@@ -4,10 +4,10 @@ mod repo;
 use crate::data::threads::movechannel::{MovementChannelData, MovementChannelDataType};
 use crate::repo::physical::motors::generic::MotorGeneric;
 use crate::repo::processors::movementprocessor::MovementProcessor;
-use common_data::commands::movement::Movement;
+use crate::repo::processors::stream::StreamHandler;
 use repo::physical::motors::base::Motor;
-use rscam::{Camera, Config};
-use std::io::Write;
+use rscam::{new, Camera, Config};
+use std::io::{BufRead, BufReader, BufWriter, Read, Write};
 use std::net::TcpListener;
 use std::sync::mpsc;
 use std::{thread, time};
@@ -83,5 +83,12 @@ fn main() {
         }
     });
 
+    let movement_listener = TcpListener::bind("0.0.0.0:3000").unwrap();
+
+    for stream in movement_listener.incoming() {
+        let handler = StreamHandler::new();
+        let movement_chanel = &movement_tx.clone();
+        handler.handle(stream.unwrap(), movement_chanel.clone())
+    }
     let _ = ping_thread.join();
 }

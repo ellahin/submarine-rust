@@ -21,6 +21,8 @@ impl<T: Motor> MovementProcessor<T> {
                 return;
             }
 
+            self.last_set = Instant::now();
+
             let data = message.data.unwrap();
             self.motors
                 .set_acceleration(data.movement_command[0].clone());
