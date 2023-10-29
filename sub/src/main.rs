@@ -62,12 +62,10 @@ fn main() {
                     "HTTP/1.1 200 OK\r\nContent-Type: multipart/x-mixed-replace; boundary=frame\r\n\r\n"
                 );
 
-                let mut buff = camera.capture().unwrap();
-
                 stream.write_all(response.as_bytes()).unwrap();
 
                 loop {
-                    buff = camera.capture().unwrap();
+                    let buff = camera.capture().unwrap();
 
                     let image_data = format!(
                         "--frame\r\nContent-Type: image/jpeg\r\nContent-Length: {}\r\n\r\n",
