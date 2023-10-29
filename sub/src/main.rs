@@ -87,9 +87,11 @@ fn main() {
     let movement_listener = TcpListener::bind("0.0.0.0:3000").unwrap();
 
     for stream in movement_listener.incoming() {
-        let handler = StreamHandler::new();
-        let movement_chanel = &movement_tx.clone();
-        handler.handle(stream.unwrap(), movement_chanel.clone())
+        let stream_movement_chanel = movement_tx.clone();
+        thread::spawn(move || {
+            let handler = StreamHandler::new();
+            handler.handle(stream.unwrap(), stream_movement_chanel);
+        });
     }
     let _ = ping_thread.join();
 }
