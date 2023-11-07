@@ -1,9 +1,9 @@
 #[derive(Debug, Clone)]
 pub struct Movement {
-    // Movement order: accel, pitch, yaw, roll
-    pub movement_command: [i8; 4],
+    // Movement order: accel, pitch, yaw, roll, hight
+    pub movement_command: [i8; 5],
     pub checksum: i16,
-    pub packet: Option<[u8; 7]>,
+    pub packet: Option<[u8; 8]>,
 }
 
 const COMMAND_NUMBER: u8 = 1;
@@ -21,7 +21,7 @@ pub enum MovementPacketDecodeError {
 impl Movement {
     pub fn new() -> Self {
         return Movement {
-            movement_command: [0, 0, 0, 0],
+            movement_command: [0, 0, 0, 0, 0],
             checksum: 0,
             packet: None,
         };
@@ -75,6 +75,18 @@ impl Movement {
         return Ok(());
     }
 
+    pub fn set_hight(&mut self, percent: i8) -> Result<(), MovementSetError> {
+        if percent < -100 || percent > 100 {
+            return Err(MovementSetError::IncorrectNumber);
+        }
+
+        self.movement_command[4] = percent;
+
+        let _ = self.set_checksum();
+
+        return Ok(());
+    }
+
     pub fn set_checksum(&mut self) {
         let mut checksum: i16 = 0;
 
@@ -89,15 +101,16 @@ impl Movement {
         self.checksum = checksum;
     }
 
-    pub fn generate_packet(&mut self) -> [u8; 7] {
+    pub fn generate_packet(&mut self) -> [u8; 8] {
         let checksum_bytes: [u8; 2] = self.checksum.to_be_bytes();
 
-        let created_packet: [u8; 7] = [
+        let created_packet: [u8; 8] = [
             COMMAND_NUMBER,
             self.movement_command[0].to_be_bytes()[0],
             self.movement_command[1].to_be_bytes()[0],
             self.movement_command[2].to_be_bytes()[0],
             self.movement_command[3].to_be_bytes()[0],
+            self.movement_command[4].to_be_bytes()[0],
             checksum_bytes[0],
             checksum_bytes[1],
         ];
@@ -107,18 +120,19 @@ impl Movement {
         return created_packet;
     }
 
-    pub fn decode_packet(packet: [u8; 7]) -> Result<Self, MovementPacketDecodeError> {
+    pub fn decode_packet(packet: [u8; 8]) -> Result<Self, MovementPacketDecodeError> {
         if packet[0] != COMMAND_NUMBER {
             return Err(MovementPacketDecodeError::NotMovementPacket);
         }
 
-        let checksum = ((packet[5] as i16) << 8) | packet[6] as i16;
+        let checksum = ((packet[6] as i16) << 8) | packet[7] as i16;
 
         let movement = [
             packet[1] as i8,
             packet[2] as i8,
             packet[3] as i8,
             packet[4] as i8,
+            packet[5] as i8,
         ];
 
         let mut working_movement = Movement {
