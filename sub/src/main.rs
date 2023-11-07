@@ -2,7 +2,7 @@ mod data;
 mod repo;
 
 use crate::data::threads::movechannel::{MovementChannelData, MovementChannelDataType};
-use crate::repo::physical::motors::generic::MotorGeneric;
+use crate::repo::physical::motors::servosixfront::ServoSixFront;
 use crate::repo::processors::movementprocessor::MovementProcessor;
 use crate::repo::processors::stream::StreamHandler;
 use repo::physical::motors::base::Motor;
@@ -16,7 +16,7 @@ fn main() {
 
     //Movement Thread
     thread::spawn(move || {
-        let motors = MotorGeneric::new();
+        let motors = ServoSixFront::new();
 
         let mut movement = MovementProcessor::new(motors);
 

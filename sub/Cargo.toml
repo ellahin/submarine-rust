@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 common_data = { path = "../common_data/"}
 rscam = "0.5.5"
+wiringpi = "0.2.4"
