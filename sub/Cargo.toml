@@ -7,5 +7,5 @@ edition = "2021"
 
 [dependencies]
 common_data = { path = "../common_data/"}
+rppal = "0.15.0"
 rscam = "0.5.5"
-wiringpi = "0.2.4"
