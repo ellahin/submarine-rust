@@ -1,13 +1,13 @@
-use crate::repo::physical::motors::base::Motor;
+use crate::repo::physical::motors::base::{Motor, MotorState};
 use common_data::libs::math::maprang::map_range;
 
 use rppal::gpio::{Gpio, OutputPin};
+use std::thread::sleep;
 use std::time::Duration;
-
 const PERIOD_MS: u64 = 20;
-const PULSE_MIN_US: u64 = 1200;
+const PULSE_MIN_US: u64 = 1000;
 const PULSE_NEUTRAL_US: u64 = 1500;
-const PULSE_MAX_US: u64 = 1800;
+const PULSE_MAX_US: u64 = 2000;
 
 fn default_map(position: i8) -> u64 {
     return map_range(position, -100, 100, PULSE_MIN_US, PULSE_MAX_US);
@@ -20,6 +20,7 @@ pub struct ServoSixFront {
     motor_back_right: OutputPin,
     motor_front_turn: OutputPin,
     motor_back_thrust: OutputPin,
+    motor_state: MotorState,
 }
 
 impl Motor for ServoSixFront {
@@ -31,55 +32,17 @@ impl Motor for ServoSixFront {
             motor_back_right: Gpio::new().unwrap().get(15).unwrap().into_output(),
             motor_front_turn: Gpio::new().unwrap().get(29).unwrap().into_output(),
             motor_back_thrust: Gpio::new().unwrap().get(31).unwrap().into_output(),
+            motor_state: MotorState::Disarmed,
         };
-
-        return_struct
-            .motor_front_left
-            .set_pwm(
-                Duration::from_millis(PERIOD_MS),
-                Duration::from_micros(PULSE_NEUTRAL_US),
-            )
-            .unwrap();
-        return_struct
-            .motor_front_right
-            .set_pwm(
-                Duration::from_millis(PERIOD_MS),
-                Duration::from_micros(PULSE_NEUTRAL_US),
-            )
-            .unwrap();
-        return_struct
-            .motor_back_left
-            .set_pwm(
-                Duration::from_millis(PERIOD_MS),
-                Duration::from_micros(PULSE_NEUTRAL_US),
-            )
-            .unwrap();
-        return_struct
-            .motor_back_right
-            .set_pwm(
-                Duration::from_millis(PERIOD_MS),
-                Duration::from_micros(PULSE_NEUTRAL_US),
-            )
-            .unwrap();
-        return_struct
-            .motor_front_turn
-            .set_pwm(
-                Duration::from_millis(PERIOD_MS),
-                Duration::from_micros(PULSE_NEUTRAL_US),
-            )
-            .unwrap();
-        return_struct
-            .motor_back_thrust
-            .set_pwm(
-                Duration::from_millis(PERIOD_MS),
-                Duration::from_micros(PULSE_NEUTRAL_US),
-            )
-            .unwrap();
 
         return return_struct;
     }
 
     fn set_pitch(&mut self, motion: i8) {
+        if self.motor_state == MotorState::Disarmed {
+            return;
+        }
+
         if motion == 0 {
             self.motor_front_left
                 .set_pwm(
@@ -175,6 +138,10 @@ impl Motor for ServoSixFront {
     }
 
     fn set_roll(&mut self, motion: i8) {
+        if self.motor_state == MotorState::Disarmed {
+            return;
+        }
+
         if motion == 0 {
             self.motor_front_left
                 .set_pwm(
@@ -270,6 +237,10 @@ impl Motor for ServoSixFront {
     }
 
     fn set_yaw(&mut self, motion: i8) {
+        if self.motor_state == MotorState::Disarmed {
+            return;
+        }
+
         let set_range = default_map(motion.clone());
 
         self.motor_front_turn
@@ -281,6 +252,10 @@ impl Motor for ServoSixFront {
     }
 
     fn set_acceleration(&mut self, motion: i8) {
+        if self.motor_state == MotorState::Disarmed {
+            return;
+        }
+
         let set_range = default_map(motion.clone());
 
         self.motor_back_thrust
@@ -292,6 +267,10 @@ impl Motor for ServoSixFront {
     }
 
     fn set_all(&mut self, acceleration: i8, yaw: i8, pitch: i8, roll: i8) {
+        if self.motor_state == MotorState::Disarmed {
+            return;
+        }
+
         self.set_acceleration(acceleration);
         self.set_yaw(yaw);
         self.set_pitch(pitch);
@@ -299,13 +278,141 @@ impl Motor for ServoSixFront {
     }
 
     fn set_all_same(&mut self, motion: i8) {
+        if self.motor_state == MotorState::Disarmed {
+            return;
+        }
+
         self.set_acceleration(motion);
         self.set_yaw(motion);
         self.set_pitch(motion);
         self.set_roll(motion);
     }
 
-    fn disengage(&mut self) {
-        self.set_all(0, 0, 0, 0);
+    fn disarm(&mut self) {
+        self.motor_front_left.clear_pwm();
+        self.motor_front_right.clear_pwm();
+        self.motor_back_left.clear_pwm();
+        self.motor_back_right.clear_pwm();
+        self.motor_front_turn.clear_pwm();
+        self.motor_back_thrust.clear_pwm();
+        self.motor_state = MotorState::Disarmed;
+    }
+
+    fn arm(&mut self) {
+        self.motor_front_left
+            .set_pwm(
+                Duration::from_millis(PERIOD_MS),
+                Duration::from_micros(PULSE_NEUTRAL_US),
+            )
+            .unwrap();
+        self.motor_front_right
+            .set_pwm(
+                Duration::from_millis(PERIOD_MS),
+                Duration::from_micros(PULSE_NEUTRAL_US),
+            )
+            .unwrap();
+        self.motor_back_left
+            .set_pwm(
+                Duration::from_millis(PERIOD_MS),
+                Duration::from_micros(PULSE_NEUTRAL_US),
+            )
+            .unwrap();
+        self.motor_back_right
+            .set_pwm(
+                Duration::from_millis(PERIOD_MS),
+                Duration::from_micros(PULSE_NEUTRAL_US),
+            )
+            .unwrap();
+        self.motor_front_turn
+            .set_pwm(
+                Duration::from_millis(PERIOD_MS),
+                Duration::from_micros(PULSE_NEUTRAL_US),
+            )
+            .unwrap();
+        self.motor_back_thrust
+            .set_pwm(
+                Duration::from_millis(PERIOD_MS),
+                Duration::from_micros(PULSE_NEUTRAL_US),
+            )
+            .unwrap();
+
+        sleep(Duration::from_millis(1000));
+
+        self.motor_front_left
+            .set_pwm(
+                Duration::from_millis(PERIOD_MS),
+                Duration::from_micros(PULSE_MAX_US),
+            )
+            .unwrap();
+        self.motor_front_right
+            .set_pwm(
+                Duration::from_millis(PERIOD_MS),
+                Duration::from_micros(PULSE_MAX_US),
+            )
+            .unwrap();
+        self.motor_back_left
+            .set_pwm(
+                Duration::from_millis(PERIOD_MS),
+                Duration::from_micros(PULSE_MAX_US),
+            )
+            .unwrap();
+        self.motor_back_right
+            .set_pwm(
+                Duration::from_millis(PERIOD_MS),
+                Duration::from_micros(PULSE_MAX_US),
+            )
+            .unwrap();
+        self.motor_front_turn
+            .set_pwm(
+                Duration::from_millis(PERIOD_MS),
+                Duration::from_micros(PULSE_MAX_US),
+            )
+            .unwrap();
+        self.motor_back_thrust
+            .set_pwm(
+                Duration::from_millis(PERIOD_MS),
+                Duration::from_micros(PULSE_MAX_US),
+            )
+            .unwrap();
+
+        sleep(Duration::from_millis(1000));
+
+        self.motor_front_left
+            .set_pwm(
+                Duration::from_millis(PERIOD_MS),
+                Duration::from_micros(PULSE_NEUTRAL_US),
+            )
+            .unwrap();
+        self.motor_front_right
+            .set_pwm(
+                Duration::from_millis(PERIOD_MS),
+                Duration::from_micros(PULSE_NEUTRAL_US),
+            )
+            .unwrap();
+        self.motor_back_left
+            .set_pwm(
+                Duration::from_millis(PERIOD_MS),
+                Duration::from_micros(PULSE_NEUTRAL_US),
+            )
+            .unwrap();
+        self.motor_back_right
+            .set_pwm(
+                Duration::from_millis(PERIOD_MS),
+                Duration::from_micros(PULSE_NEUTRAL_US),
+            )
+            .unwrap();
+        self.motor_front_turn
+            .set_pwm(
+                Duration::from_millis(PERIOD_MS),
+                Duration::from_micros(PULSE_NEUTRAL_US),
+            )
+            .unwrap();
+        self.motor_back_thrust
+            .set_pwm(
+                Duration::from_millis(PERIOD_MS),
+                Duration::from_micros(PULSE_NEUTRAL_US),
+            )
+            .unwrap();
+        self.motor_state = MotorState::Armed;
     }
 }
