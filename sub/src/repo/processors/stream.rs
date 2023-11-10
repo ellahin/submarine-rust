@@ -52,14 +52,14 @@ impl StreamHandler {
         let mut working_vec = buff;
 
         working_vec.pop();
-        if working_vec.len() != 7 {
+        if working_vec.len() != 8 {
             stream.shutdown(Shutdown::Both).unwrap();
             return;
         }
 
         println!("movement buff = {:#?}", working_vec);
 
-        let working_buff: [u8; 7] = working_vec.try_into().unwrap();
+        let working_buff: [u8; 8] = working_vec.try_into().unwrap();
 
         let movement_command = Movement::decode_packet(working_buff.to_owned());
 
